@@ -1,3 +1,4 @@
+# Initiate backend and provider
 terraform {
   required_providers {
       aws = {
@@ -5,3 +6,9 @@ terraform {
       }
   }
 }
+
+# Provider config
+provider "aws" {
+  region = var.aws_region
+}
+
