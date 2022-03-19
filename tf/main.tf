@@ -73,8 +73,8 @@ resource "aws_vpc" "kubernetes_cluster" {
 
 resource "aws_subnet" "kubernetes_subnet" {
   vpc_id            = aws_vpc.kubernetes_cluster.id
-  cidr_block        = "10.16.0.0/24"
-  availability_zone = var.aws_region
+  cidr_block        = "172.16.0.0/24"
+  availability_zone = "ca-central-1a"
 
   tags = {
     Name = "kubernetes_cluster"

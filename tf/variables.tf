@@ -3,7 +3,7 @@
 variable "aws_region" {
   description = "AWS region"
   type        = string
-  default     = "ca-central-1a"
+  default     = "ca-central-1"
 }
 
 variable "ec2_instance_type" {
