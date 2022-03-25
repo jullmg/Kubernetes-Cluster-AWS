@@ -1,0 +1,25 @@
+-
+  name: Install Kubernetes cluster
+  hosts: kmaster01
+  tasks:
+    # Prepare system configs
+    - name: Enable br_netfilter module
+      command: sudo modprobe br_netfilter
+      become: true
+
+    - name: Configure br_netfilter to load at boot
+      command: sudo sh -c 'echo "br_netfilter" > /etc/modules-load.d/br_netfilter.conf'
+      become: true
+
+    - name: Ensure net.bridge.bridge-nf-call-iptables is set to 1 in sysctl config
+      command: sudo sh -c 'printf "net.bridge.bridge-nf-call-ip6tables = 1\nnet.bridge.bridge-nf-call-iptables = 1" > /etc/sysctl.d/k8s.conf'
+      become: true
+
+    # Packages installation
+    - name: Installation of Container Runtime Interface (CRI) containerd
+      apt:
+        name: containerd
+        update_cache: true
+        state: present
+      become: true
+

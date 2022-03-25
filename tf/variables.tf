@@ -13,8 +13,14 @@ variable "ec2_instance_type" {
 
 }
 
-variable "ingress_settings" {
+variable "kubernetes_control_plane" {
   description = "List of open input ports for the AWS security group"
   type        = list(any)
-  default     = ["22"]
+  default        = [["22", "22"], ["6443", "6443"], ["2379", "2380"], ["10250", "10250"], ["10257", "10257"], ["10259", "10259"]]
+}
+
+variable "kubernetes_workers" {
+  description = "List of open input ports for the AWS security group (k8 workers)"
+  type        = list(any)
+  default        = [["22", "22"], ["10250", "10250"], ["30000", "32767"]]
 }
