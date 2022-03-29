@@ -3,23 +3,64 @@
   hosts: kmaster01
   tasks:
     # Prepare system configs
-    - name: Enable br_netfilter module
-      command: sudo modprobe br_netfilter
-      become: true
+    # - name: Enable br_netfilter module
+    #   command: sudo modprobe br_netfilter
+    #   become: true
 
-    - name: Configure br_netfilter to load at boot
-      command: sudo sh -c 'echo "br_netfilter" > /etc/modules-load.d/br_netfilter.conf'
-      become: true
+    # - name: Configure br_netfilter to load at boot
+    #   command: sudo sh -c 'echo "br_netfilter" > /etc/modules-load.d/br_netfilter.conf'
+    #   become: true
 
-    - name: Ensure net.bridge.bridge-nf-call-iptables is set to 1 in sysctl config
-      command: sudo sh -c 'printf "net.bridge.bridge-nf-call-ip6tables = 1\nnet.bridge.bridge-nf-call-iptables = 1" > /etc/sysctl.d/k8s.conf'
-      become: true
+    # - name: Ensure net.bridge.bridge-nf-call-iptables is set to 1 in sysctl config
+    #   command: sudo sh -c 'printf "net.bridge.bridge-nf-call-ip6tables = 1\nnet.bridge.bridge-nf-call-iptables = 1" > /etc/sysctl.d/k8s.conf'
+    #   become: true
 
-    # Packages installation
-    - name: Installation of Container Runtime Interface (CRI) containerd
+    - name: Apply config changes
+      command: sudo sysctl --system
+      become: true   
+
+    # - name: >
+    #         Install Container Runtime Interface (CRI) containerd
+    #         and packages needed to use the Kubernetes apt repository
+    #   apt:
+    #     pkg:
+    #     - containerd 
+    #     - apt-transport-https
+    #     - ca-certificates
+    #     - curl
+    #     update_cache: true
+    #     state: present
+    #   become: true
+
+    # - name: Download the Google Cloud public signing key
+    #   command: sudo curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg
+    #   become: true
+
+    # - name: Add the Kubernetes apt repository
+    #   shell: echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
+    #   become: true
+
+    - name: Update apt package index, install kubelet, kubeadm and kubectl
       apt:
-        name: containerd
+        pkg:
+        - kubelet 
+        - kubeadm
+        - kubectl
         update_cache: true
         state: present
       become: true
 
+    - name: Prevent kubeadm from being upgraded
+      dpkg_selections:
+        name: kubeadm
+        selection: hold
+
+    # - name: Prevent kubeadm from being upgraded
+    #   dpkg_selections:
+    #     name: kubeadm
+    #     selection: hold
+
+    # - name: Prevent kubeadm from being upgraded
+    #   dpkg_selections:
+    #     name: kubeadm
+    #     selection: hold
