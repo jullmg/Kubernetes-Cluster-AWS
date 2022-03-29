@@ -1,1 +1,1 @@
-kmaster01 ansible_host=192.168.0.108
+kmaster01 ansible_host=192.168.0.111
