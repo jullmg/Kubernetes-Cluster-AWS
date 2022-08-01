@@ -109,7 +109,7 @@
   tasks:
     # - name: testjmg
     #   ansible.builtin.apt:
-    #     name: "*"
+    #     name: "**"
     #     state: latest
     #     autoremove: true
     #     clean: true
