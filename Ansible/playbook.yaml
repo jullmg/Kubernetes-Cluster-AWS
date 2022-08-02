@@ -127,25 +127,50 @@
     #     line: "KUBECONFIG=/etc/kubernetes/admin.conf"
     #   become: true
 
+    # - name: Untaint the master node so it is shedulable
+    #   shell: kubectl taint nodes --all node-role.kubernetes.io/master-
+    #   register: ps
+    #   become: true
+    #   ignore_errors: true
+
+    # - name: Install the Flannel CNI
+    #   shell: kubectl apply -f https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml
+    #   register: ps
+    #   become: true
+
+    - name: Fetch the token for joining nodes
+      shell: kubeadm token list --experimental-output yaml
+      register: command_output
+      become: true
+
+    - debug: msg="{{ command_output.stdout }}"
+
+    - name: Extract token from command output of last task
+      set_fact:
+        token: "{{ command_output.stdout | regex_search('(?<=token: )(.*)(?=\\nusages)') }}"
+
+    - debug: msg="{{ token }}"
+
+    # - name: Extract token from Json outputted on last task    
+    #   debug:
+    #     var: command_output.stdout
+
+
+
+
 ### TO DO ###
 
-    - name: Untaint the master node so it is shedulable
-      shell: kubectl taint nodes --all node-role.kubernetes.io/control-plane- node-role.kubernetes.io/master-
-      register: ps
-      become: true
-      ignore_errors: true
-
-    - name: Install the Flannel CNI
-      shell: kubectl apply -f https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml
-      register: ps
-      become: true
-
+    # Fetch the discovery token ca cert hash value
+    # openssl x509 -pubkey -in /etc/kubernetes/pki/ca.crt | openssl rsa -pubin -outform der 2>/dev/null | openssl dgst -sha256 -hex | sed 's/^.* //'
 
 ### PLAY: Join worker nodes ###
 
-# Fetch the token for joining nodes
-# kubeadm token list --experimental-output yaml
+# -
+#   name: Join worker nodes to the cluster
+#   hosts: workers
+#   tasks:
+
 
 # Join the worker nodes
 # kubeadm join <control-plane-host>:<control-plane-port> --token <token> --discovery-token-ca-cert-hash sha256:<hash>
-# kubeadm join 192.168.0.110:<control-plane-port> --token 4wppw7.t8mmil24zwpsrtrh --discovery-token-ca-cert-hash sha256:<hash>
+# kubeadm join 192.168.0.110:8080 --token 4wppw7.t8mmil24zwpsrtrh --discovery-token-ca-cert-hash sha256:f6b9b2e9846584b7b6f63d2fb4292fad4e6854a53491a128a2524d791c26116a
