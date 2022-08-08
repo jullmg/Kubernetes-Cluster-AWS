@@ -1,6 +1,7 @@
 # -
 #   name: Install Kubeadm and the Container Runtime Interface (CRI) on all hosts
 #   hosts: all
+#   gather_facts: false
 #   tasks:
 
 #     - name: Update all packages to their latest version, remove unused dependencies and clean package download cache
@@ -11,7 +12,7 @@
 #         autoremove: true
 #         clean: true
 #       become: true
-    
+
 #     - name: Configure module br_netfilter to load at boot
 #       command: sudo sh -c 'echo "br_netfilter" > /etc/modules-load.d/br_netfilter.conf'
 #       become: true
@@ -105,7 +106,9 @@
 -
   name: Initiate master node(s)
   hosts: masters
+  gather_facts: false
   tasks:
+
     # - name: Set ip forwarding to 1
     #   command: sudo sh -c 'echo "1" > /proc/sys/net/ipv4/ip_forward'
     #   become: true
@@ -138,39 +141,45 @@
     #   register: ps
     #   become: true
 
-    - name: Fetch the token for joining nodes
-      shell: kubeadm token list --experimental-output yaml
-      register: command_output
+    - name: Create new token and fetch the command for joining nodes
+      shell: kubeadm token create --print-join-command
+      register: join_command
       become: true
 
-    - debug: msg="{{ command_output.stdout }}"
+    - debug: 
+        msg: "The join command is: {{ join_command.stdout }}"
 
-    - name: Extract token from command output of last task
-      set_fact:
-        token: "{{ command_output.stdout | regex_search('(?<=token: )(.*)(?=\\nusages)') }}"
+    - name: Register dummy host with the join command value
+      add_host:
+        name: "DUMMY_HOST"
+        join_command_cached: " {{ join_command.stdout }}"
 
-    - debug: msg="{{ token }}"
+    # - name: Fetch the token for joining nodes
+    #   shell: kubeadm token list --experimental-output yaml
+    #   register: command_output
+    #   become: true
 
-    # - name: Extract token from Json outputted on last task    
-    #   debug:
-    #     var: command_output.stdout
+    # - debug: msg="{{ command_output.stdout }}"
 
-
-
-
-### TO DO ###
+    # - name: Extract token from command output of last task
+    #   set_fact:
+    #     token: "{{ command_output.stdout | regex_search('(?<=token: )(.*)(?=\\nusages)') }}"
 
     # Fetch the discovery token ca cert hash value
     # openssl x509 -pubkey -in /etc/kubernetes/pki/ca.crt | openssl rsa -pubin -outform der 2>/dev/null | openssl dgst -sha256 -hex | sed 's/^.* //'
 
 ### PLAY: Join worker nodes ###
+-
+  name: Join worker nodes to the cluster
+  hosts: workers
+  gather_facts: false
+  tasks:
 
-# -
-#   name: Join worker nodes to the cluster
-#   hosts: workers
-#   tasks:
+    - name: Set ip forwarding to 1
+      command: sudo sh -c 'echo "1" > /proc/sys/net/ipv4/ip_forward'
+      become: true
 
+    - name: Joining the worker node
+      shell: "{{ hostvars['DUMMY_HOST']['join_command_cached'] }}"
+      become: true
 
-# Join the worker nodes
-# kubeadm join <control-plane-host>:<control-plane-port> --token <token> --discovery-token-ca-cert-hash sha256:<hash>
-# kubeadm join 192.168.0.110:8080 --token 4wppw7.t8mmil24zwpsrtrh --discovery-token-ca-cert-hash sha256:f6b9b2e9846584b7b6f63d2fb4292fad4e6854a53491a128a2524d791c26116a
