@@ -1,6 +1,7 @@
 # -
 #   name: Install Kubeadm and the Container Runtime Interface (CRI) on all hosts
 #   hosts: all
+#   become: true
 #   gather_facts: false
 #   tasks:
 
@@ -107,6 +108,7 @@
   name: Initiate master node(s)
   hosts: masters
   gather_facts: false
+  become: true
   tasks:
 
     # - name: Set ip forwarding to 1
@@ -173,13 +175,12 @@
   name: Join worker nodes to the cluster
   hosts: workers
   gather_facts: false
+  become: true
   tasks:
 
     - name: Set ip forwarding to 1
       command: sudo sh -c 'echo "1" > /proc/sys/net/ipv4/ip_forward'
-      become: true
 
     - name: Joining the worker node
       shell: "{{ hostvars['DUMMY_HOST']['join_command_cached'] }}"
-      become: true
 
