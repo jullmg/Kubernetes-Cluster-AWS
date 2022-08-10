@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+
+{% block body %}
+Enter amount to deposit
+<form method="post">
+    <input name="deposit_amount" type="text" value="" />
+    <br>
+    <button type="submit" value="submit">Submit</button>
+</form>
+<br><br>
+{% if amount %}
+You have deposited {{ amount }}$
+
+{% elif errorflag  %}
+{{ errorflag }}
+
+{% endif %}
+
+
+{% endblock %}

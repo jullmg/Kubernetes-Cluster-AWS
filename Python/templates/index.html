@@ -1,13 +1,28 @@
 {% extends 'base.html' %}
 
-{% block head %}
-Enter money to deposit
-{% endblock %}
+{% block head %}{% endblock %}
 
 {% block body %}
+<h1>Welcome to the bank</h1>
+<br>
+Current account is at {{ account_amount }}
+<br><br>
+Please select operation
+<br><br>
 <form method="post">
-    <input name="amount" type="text" value="" />
+  
+    <button name="deposit_button" type="submit" value="deposit_button">Deposit</button>
+    <button name="withdraw_button" type="submit" value="withdraw_button">Withdraw</button>
+</form>
+<br><br><br>
+
+{% if operation %}
+<form method="post">
+    <input name="deposit_amount" type="text" value="" />
     <br>
     <button type="submit" value="submit">Submit</button>
 </form>
+<br><br>
+{% endif %}
+
 {% endblock %}
