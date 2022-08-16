@@ -54,14 +54,6 @@ def home():
             else:
                 return render_template('index.html', errorflag="Please enter a valid value for this operation")
         
-
-
-            
-            print("Submit selected")
-            amount = request.form["operation_amount"]
-            account_amount += int(amount)
-
-            return render_template('index.html', operation=True, account_amount=account_amount)
     else:
         return render_template('index.html', account_amount=account_amount)
 
