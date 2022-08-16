@@ -17,12 +17,21 @@ Please select operation
 <br><br><br>
 
 {% if operation %}
+    {% if operation=="deposit" %}
+    Enter amount to deposit
+    {% elif operation=="withdrawal" %}
+    Enter amount to withdraw
+    {% endif %}
+
 <form method="post">
-    <input name="deposit_amount" type="text" value="" />
+    <input name="operation_amount" type="text" value="" />
     <br>
     <button type="submit" value="submit">Submit</button>
 </form>
 <br><br>
+{% endif %}
+{% if errorflag %}
+Please enter a valid amount
 {% endif %}
 
 {% endblock %}
