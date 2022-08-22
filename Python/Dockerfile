@@ -8,6 +8,8 @@ RUN mkdir -p /home/app
 
 COPY ./app.py /home/app/
 
+COPY ./templates/* /home/app/templates/
+
 COPY ./start.sh /home/app/
 
 EXPOSE 5000
@@ -15,3 +17,4 @@ EXPOSE 5000
 RUN chmod +x /home/app/start.sh
 
 CMD ["/home/app/start.sh"]
+

@@ -99,17 +99,28 @@ try:
 
     cur = conn.cursor()
 
+except Exception as error:
+    print(error)
+    quit()
+
+try:
+    print('Create the bank_account table if it does not exists')
     # Create the bank_account table if it does not exists
-    create_script = ''' CREATE TABLE IF NOT EXISTS bank_account (
-                            id             int PRIMARY KEY,
-                            account_amount int) '''
+    create_script = 'CREATE TABLE IF NOT EXISTS bank_account (id int PRIMARY KEY, account_amount int)'
 
     cur.execute(create_script)
 
+    print("Select current amount from bank account")
     select_script = 'SELECT account_amount from bank_account'
-
     cur.execute(select_script)
-    table_content = cur.fetchall()[0][0]
+
+    table_content = None
+
+    try:
+        table_content = cur.fetchall()[0][0]
+    except:
+        pass
+
 
     print(f'The account amount is: {table_content}')
     if table_content != None:
