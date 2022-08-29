@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: thebank
+  labels:
+    app: thebank
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: thebank
+  template:
+    metadata:
+      labels:
+        app: thebank
+    spec:
+      containers:
+      - name: thebank
+        image: jullmg/thebankapp:latest
+
+
+
+        
+        # ports:
+        # - containerPort: 5432 # Informal only
+        # envFrom:
+        #   - configMapRef:
+        #       name: postgres-configmap
+      

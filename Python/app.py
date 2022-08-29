@@ -76,7 +76,8 @@ def deposit():
 
 # Postgresql variables
 # hostname = 'localhost'
-hostname = 'pgsqlcontainer'
+# hostname = 'pgsqlcontainer'
+hostname = 'postgresql'
 database = 'thebank'
 username = 'banker'
 pwd = 'banker12345'
