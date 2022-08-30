@@ -1,4 +1,9 @@
-#### TO-DO at pgsql pod init ####
+#### TO-DO ####
+# Make sure all queries to DB are good or else exit app
+# pods need to restart if db connect is lost in order to reconnect to psql DB)
+
+# The amount of money is added again when refreshing page
+
 
 # Postgres DB: thebank User: banker PW: banker12345
 
