@@ -7,4 +7,3 @@ metadata:
 data:
   POSTGRES_DB: thebank
   POSTGRES_USER: banker
-  POSTGRES_PASSWORD: banker12345

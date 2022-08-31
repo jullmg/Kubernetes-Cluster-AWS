@@ -20,6 +20,12 @@ spec:
         ports:
         - containerPort: 5432 # Informal only
           name: postgresql
+        env:
+          - name: POSTGRES_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: postgres
+                key: pg_pw
         envFrom:
           - configMapRef:
               name: postgres-configmap

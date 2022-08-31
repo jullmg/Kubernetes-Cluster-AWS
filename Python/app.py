@@ -1,4 +1,5 @@
 #### TO-DO ####
+# Setup password from env variable fed by k8 secret
 # Make sure all queries to DB are good or else exit app
 # pods need to restart if db connect is lost in order to reconnect to psql DB)
 
@@ -85,7 +86,8 @@ def deposit():
 hostname = 'postgresql'
 database = 'thebank'
 username = 'banker'
-pwd = 'banker12345'
+# pwd = 'banker12345'
+pwd = 
 port_id = 5432
 conn = None
 cur = None
