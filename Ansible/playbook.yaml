@@ -1,147 +1,149 @@
-# -
-#   name: Install Kubeadm and the Container Runtime Interface (CRI) on all hosts
-#   hosts: all
-#   become: true
-#   gather_facts: false
-#   tasks:
+-
+  name: Install Kubeadm and the Container Runtime Interface (CRI) on all hosts
+  hosts: all
+  tags: prep
+  become: true
+  gather_facts: false
+  tasks:
 
-#     - name: Update all packages to their latest version, remove unused dependencies and clean package download cache
-#       ansible.builtin.apt:
-#         name: "*"
-#         state: latest
-#         update_cache: true
-#         autoremove: true
-#         clean: true
-#       become: true
+    - name: Update all packages to their latest version, remove unused dependencies and clean package download cache
+      ansible.builtin.apt:
+        name: "*"
+        state: latest
+        update_cache: true
+        autoremove: true
+        clean: true
+      become: true
 
-#     - name: Configure module br_netfilter to load at boot
-#       command: sudo sh -c 'echo "br_netfilter" > /etc/modules-load.d/br_netfilter.conf'
-#       become: true
+    - name: Configure module br_netfilter to load at boot
+      command: sudo sh -c 'echo "br_netfilter" > /etc/modules-load.d/br_netfilter.conf'
+      become: true
 
-#     - name: Configure module overlay to load at boot (prerequisite for containerd)
-#       command: sudo sh -c 'echo "overlay" > /etc/modules-load.d/containerd.conf'
-#       become: true
+    - name: Configure module overlay to load at boot (prerequisite for containerd)
+      command: sudo sh -c 'echo "overlay" > /etc/modules-load.d/containerd.conf'
+      become: true
 
-#     - name: Add br_netfilter and overlay modules to the Linux Kernel
-#       command: sudo modprobe -a br_netfilter overlay
-#       become: true
+    - name: Add br_netfilter and overlay modules to the Linux Kernel
+      command: sudo modprobe -a br_netfilter overlay
+      become: true
 
-#     - name: Ensure net.bridge.bridge-nf-call-iptables is set to 1 in sysctl config
-#       command: sudo sh -c 'printf "net.bridge.bridge-nf-call-ip6tables = 1\nnet.bridge.bridge-nf-call-iptables = 1" > /etc/sysctl.d/k8s.conf'
-#       become: true
+    - name: Ensure net.bridge.bridge-nf-call-iptables is set to 1 in sysctl config
+      command: sudo sh -c 'printf "net.bridge.bridge-nf-call-ip6tables = 1\nnet.bridge.bridge-nf-call-iptables = 1" > /etc/sysctl.d/k8s.conf'
+      become: true
 
-#     - name: Apply sysctl params without reboot 
-#       command: sudo sysctl --system
-#       become: true   
+    - name: Apply sysctl params without reboot 
+      command: sudo sysctl --system
+      become: true   
 
-#     - name: >
-#             Install Container Runtime Interface (CRI) containerd
-#             and packages needed to use the Kubernetes apt repository
-#       apt:
-#         pkg:
-#         - containerd 
-#         - apt-transport-https
-#         - ca-certificates
-#         - curl
-#         update_cache: true
-#         state: present
-#       become: true
+    - name: >
+            Install Container Runtime Interface (CRI) containerd
+            and packages needed to use the Kubernetes apt repository
+      apt:
+        pkg:
+        - containerd 
+        - apt-transport-https
+        - ca-certificates
+        - curl
+        update_cache: true
+        state: present
+      become: true
 
-#     - name: Create directory for containerd config file
-#       file:
-#         path: /etc/containerd
-#         state: directory
-#       become: true
+    - name: Create directory for containerd config file
+      file:
+        path: /etc/containerd
+        state: directory
+      become: true
     
-#     - name: Generate default config file for containerd
-#       shell: containerd config default | sudo tee /etc/containerd/config.toml
-#       become: true
+    - name: Generate default config file for containerd
+      shell: containerd config default | sudo tee /etc/containerd/config.toml
+      become: true
 
-#     - name: Modify the containerd config file to use the systemd cgroup driver with runc
-#       replace:
-#         path: /etc/containerd/config.toml
-#         regexp: '^\s*SystemdCgroup\s=\sfalse$'
-#         replace: 'SystemdCgroup = true'
-#       become: true
+    - name: Modify the containerd config file to use the systemd cgroup driver with runc
+      replace:
+        path: /etc/containerd/config.toml
+        regexp: '^\s*SystemdCgroup\s=\sfalse$'
+        replace: 'SystemdCgroup = true'
+      become: true
 
-#     - name: Restart containerd
-#       command: sudo systemctl restart containerd
-#       become: true
+    - name: Restart containerd
+      command: sudo systemctl restart containerd
+      become: true
 
-#     - name: Download the Google Cloud public signing key
-#       command: sudo curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg
-#       become: true
+    - name: Download the Google Cloud public signing key
+      command: sudo curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg
+      become: true
 
-#     - name: Add the Kubernetes apt repository
-#       shell: echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
-#       become: true
+    - name: Add the Kubernetes apt repository
+      shell: echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
+      become: true
 
-#     - name: Install kubelet, kubeadm and kubectl
-#       apt:
-#         pkg:
-#         - kubelet 
-#         - kubeadm
-#         - kubectl
-#         update_cache: true
-#         state: present
-#       become: true
+    - name: Install kubelet, kubeadm and kubectl
+      apt:
+        pkg:
+        - kubelet 
+        - kubeadm
+        - kubectl
+        update_cache: true
+        state: present
+      become: true
 
-#     - name: Prevent kubeadm from being upgraded (set package to hold)
-#       dpkg_selections:
-#         name: kubeadm
-#         selection: hold
-#       become: true
+    - name: Prevent kubeadm from being upgraded (set package to hold)
+      dpkg_selections:
+        name: kubeadm
+        selection: hold
+      become: true
 
-#     - name: Prevent kubelet from being upgraded
-#       dpkg_selections:
-#         name: kubelet
-#         selection: hold
-#       become: true
+    - name: Prevent kubelet from being upgraded
+      dpkg_selections:
+        name: kubelet
+        selection: hold
+      become: true
 
-#     - name: Prevent kubectl from being upgraded
-#       dpkg_selections:
-#         name: kubectl
-#         selection: hold
-#       become: true
+    - name: Prevent kubectl from being upgraded
+      dpkg_selections:
+        name: kubectl
+        selection: hold
+      become: true
 
 -
   name: Initiate master node(s)
   hosts: masters
+  tags: initmaster
   gather_facts: false
   become: true
   tasks:
 
-    # - name: Set ip forwarding to 1
-    #   command: sudo sh -c 'echo "1" > /proc/sys/net/ipv4/ip_forward'
-    #   become: true
+    - name: Set ip forwarding to 1
+      command: sudo sh -c 'echo "1" > /proc/sys/net/ipv4/ip_forward'
+      become: true
 
-    # - name: Initiate the master node(s) with the kubeadm command
-    #   shell: kubeadm init --pod-network-cidr=10.244.0.0/16
-    #   register: ps
-    #   become: true
-    #   ignore_errors: true
+    - name: Initiate the master node(s) with the kubeadm command
+      shell: kubeadm init --pod-network-cidr=10.244.0.0/16
+      register: ps
+      become: true
+      ignore_errors: true
 
-    # - name: Set the KUBECONFIG env variable for root user
-    #   shell: export KUBECONFIG=/etc/kubernetes/admin.conf
-    #   become: true
+    - name: Set the KUBECONFIG env variable for root user
+      shell: export KUBECONFIG=/etc/kubernetes/admin.conf
+      become: true
 
-    # - name: Add the env variable KUBECONFIG to /etc/environment so that it is set permanently
-    #   lineinfile:
-    #     path: "/etc/environment"
-    #     state: present
-    #     line: "KUBECONFIG=/etc/kubernetes/admin.conf"
-    #   become: true
+    - name: Add the env variable KUBECONFIG to /etc/environment so that it is set permanently
+      lineinfile:
+        path: "/etc/environment"
+        state: present
+        line: "KUBECONFIG=/etc/kubernetes/admin.conf"
+      become: true
 
-    # - name: Untaint the master node so it is shedulable
-    #   shell: kubectl taint nodes --all node-role.kubernetes.io/master-
-    #   register: ps
-    #   become: true
-    #   ignore_errors: true
+    - name: Untaint the master node so it is shedulable [Ignore if error]
+      shell: kubectl taint nodes --all node-role.kubernetes.io/master-
+      register: ps
+      become: true
+      ignore_errors: true
 
-    # - name: Install the Flannel CNI
-    #   shell: kubectl apply -f https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml
-    #   register: ps
-    #   become: true
+    - name: Install the Flannel CNI
+      shell: kubectl apply -f https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml
+      register: ps
+      become: true
 
     - name: Create new token and fetch the command for joining nodes
       shell: kubeadm token create --print-join-command
@@ -156,16 +158,16 @@
         name: "DUMMY_HOST"
         join_command_cached: " {{ join_command.stdout }}"
 
-    # - name: Fetch the token for joining nodes
-    #   shell: kubeadm token list --experimental-output yaml
-    #   register: command_output
-    #   become: true
+    - name: Fetch the token for joining nodes
+      shell: kubeadm token list --experimental-output yaml
+      register: command_output
+      become: true
 
-    # - debug: msg="{{ command_output.stdout }}"
+    - debug: msg="{{ command_output.stdout }}"
 
-    # - name: Extract token from command output of last task
-    #   set_fact:
-    #     token: "{{ command_output.stdout | regex_search('(?<=token: )(.*)(?=\\nusages)') }}"
+    - name: Extract token from command output of last task
+      set_fact:
+        token: "{{ command_output.stdout | regex_search('(?<=token: )(.*)(?=\\nusages)') }}"
 
     # Fetch the discovery token ca cert hash value
     # openssl x509 -pubkey -in /etc/kubernetes/pki/ca.crt | openssl rsa -pubin -outform der 2>/dev/null | openssl dgst -sha256 -hex | sed 's/^.* //'
@@ -174,6 +176,7 @@
 -
   name: Join worker nodes to the cluster
   hosts: workers
+  tags: initworker
   gather_facts: false
   become: true
   tasks:
