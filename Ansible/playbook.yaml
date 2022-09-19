@@ -123,15 +123,8 @@
       become: true
       ignore_errors: true
 
-    - name: Set the KUBECONFIG env variable for root user
-      shell: export KUBECONFIG=/etc/kubernetes/admin.conf
-      become: true
-
-    - name: Add the env variable KUBECONFIG to /etc/environment so that it is set permanently
-      lineinfile:
-        path: "/etc/environment"
-        state: present
-        line: "KUBECONFIG=/etc/kubernetes/admin.conf"
+    - name: Copy kubectl config file for root user
+      shell: sudo cp -i /etc/kubernetes/admin.conf /root/.kube/config
       become: true
 
     - name: Untaint the master node so it is shedulable [Ignore if error]
