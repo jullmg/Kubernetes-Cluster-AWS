@@ -162,6 +162,14 @@
       set_fact:
         token: "{{ command_output.stdout | regex_search('(?<=token: )(.*)(?=\\nusages)') }}"
 
+    - name: Install Helm
+      shell: |
+        curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+        chmod 700 get_helm.sh
+        ./get_helm.sh
+      become: true
+      tags: installhelm
+
     # Fetch the discovery token ca cert hash value
     # openssl x509 -pubkey -in /etc/kubernetes/pki/ca.crt | openssl rsa -pubin -outform der 2>/dev/null | openssl dgst -sha256 -hex | sed 's/^.* //'
 

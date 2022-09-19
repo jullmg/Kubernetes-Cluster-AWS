@@ -17,13 +17,4 @@ spec:
       containers:
       - name: thebank
         image: jullmg/thebankapp:latest
-
-
-
         
-        # ports:
-        # - containerPort: 5432 # Informal only
-        # envFrom:
-        #   - configMapRef:
-        #       name: postgres-configmap
-      
