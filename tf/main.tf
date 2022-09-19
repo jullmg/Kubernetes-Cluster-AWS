@@ -12,6 +12,9 @@ provider "aws" {
   region = var.aws_region
 }
 
+provider "local" {
+}
+
 ############################################
 #### Resources #############################
 ############################################
@@ -224,6 +227,16 @@ data "aws_ami" "aws_ubuntu_ami" {
 
 }
 
+# generate inventory file for Ansible
+resource "local_file" "inventory_cfg" {
+  content = templatefile("${path.module}/templates/inventory.tpl",
+    {
+      master_ip = aws_eip.master_eip.public_ip
+      workers_ip = aws_eip.worker_eip[*].public_ip
+    }
+  )
+  filename = "../Ansible/inventory"
+}
 
 
 
