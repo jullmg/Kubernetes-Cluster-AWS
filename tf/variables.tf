@@ -6,6 +6,11 @@ variable "aws_region" {
   default     = "ca-central-1"
 }
 
+variable "aws_availibility_zone" {
+  type        = string
+  default     = "ca-central-1a"
+}
+
 variable "ec2_instance_type" {
   description = "AWS EC2 instance type"
   type        = string

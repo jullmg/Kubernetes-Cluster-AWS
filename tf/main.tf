@@ -12,11 +12,11 @@ provider "aws" {
   region = var.aws_region
 }
 
-###################
-#### Resources ####
-###################
+############################################
+#### Resources #############################
+############################################
 
-# Virtual Private Cloud
+################ Networking ################
 
 resource "aws_vpc" "kubernetes_cluster" {
   cidr_block           = "172.16.0.0/16"
@@ -36,8 +36,9 @@ resource "aws_internet_gateway" "kubernetes_gw" {
 }
 
 resource "aws_subnet" "kubernetes_subnet" {
-  vpc_id            = aws_vpc.kubernetes_cluster.id
-  cidr_block        = "172.16.0.0/24"
+  vpc_id                  = aws_vpc.kubernetes_cluster.id
+  cidr_block              = "172.16.0.0/24"
+  map_public_ip_on_launch = true
   availability_zone = "ca-central-1a"
 
   tags = {
@@ -45,9 +46,31 @@ resource "aws_subnet" "kubernetes_subnet" {
   }
 }
 
+# Route to internet gateway
+resource "aws_route_table" "kubernetes_route" {
+  vpc_id = aws_vpc.kubernetes_cluster.id
+
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.kubernetes_gw.id
+  }
+
+  tags = {
+    Name = "kubernetes_cluster"
+
+  }
+}
+
+# Need to associate internet gateway route to subnet
+resource "aws_route_table_association" "a" {
+  subnet_id      = aws_subnet.kubernetes_subnet.id
+  route_table_id = aws_route_table.kubernetes_route.id
+}
+
 resource "aws_network_interface" "kubernetes-network-int" {
-  count = var.worker_nodes_count + 1
-  subnet_id   = aws_subnet.kubernetes_subnet.id
+  count     = var.worker_nodes_count + 1
+  subnet_id = aws_subnet.kubernetes_subnet.id
+  security_groups = [aws_security_group.kubernetes_control_plane.id]
   # private_ips = ["172.16.0.100"]
 
   tags = {
@@ -57,10 +80,12 @@ resource "aws_network_interface" "kubernetes-network-int" {
 
 
 # Master node(s)
+# vpc and subnet are set on network interface resource
 resource "aws_instance" "kmaster" {
-  ami                    = data.aws_ami.aws_ubuntu_ami.id // Ubuntu Server 20.04LTS
-  instance_type          = var.ec2_instance_type
-  key_name               = "K8-cluster"
+  ami               = data.aws_ami.aws_ubuntu_ami.id // Ubuntu Server 20.04LTS
+  instance_type     = var.ec2_instance_type
+  availability_zone = var.aws_availibility_zone
+  key_name          = "K8-cluster"
   # vpc_security_group_ids = [aws_security_group.kubernetes_control_plane.id]
   # subnet_id              = aws_subnet.kubernetes_subnet.id
 
@@ -83,13 +108,15 @@ resource "aws_instance" "kmaster" {
 }
 
 # Worker nodes
+# vpc and subnet are set on network interface resource
 resource "aws_instance" "kworker" {
-  ami                    = data.aws_ami.aws_ubuntu_ami.id
-  instance_type          = var.ec2_instance_type
-  key_name               = "K8-cluster"
-  count                  = var.worker_nodes_count
+  ami               = data.aws_ami.aws_ubuntu_ami.id
+  instance_type     = var.ec2_instance_type
+  availability_zone = var.aws_availibility_zone
+  key_name          = "K8-cluster"
+  count             = var.worker_nodes_count
   # vpc_security_group_ids = [aws_security_group.kubernetes_workers.id]
-  //subnet_id = aws_subnet.kubernetes_subnet.id
+  # subnet_id = aws_subnet.kubernetes_subnet.id
 
 
   tags = {
@@ -99,6 +126,7 @@ resource "aws_instance" "kworker" {
   network_interface {
     network_interface_id = aws_network_interface.kubernetes-network-int[count.index + 1].id
     device_index         = 0
+    
   }
 
   root_block_device {
