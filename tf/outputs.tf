@@ -3,7 +3,7 @@ output "aws-ami-ubutu" {
 }
 
 output "aws-eip-master" {
-  value = aws_eip.master_eip.public_ip
+  value = aws_eip.master_eip[*].public_ip
 }
 
 output "aws-eip-workers" {

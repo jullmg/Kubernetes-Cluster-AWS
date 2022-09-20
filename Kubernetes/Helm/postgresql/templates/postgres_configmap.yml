@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-configmap
+  labels:
+    app: postgresql
+data:
+  POSTGRES_DB: thebank
+  POSTGRES_USER: banker

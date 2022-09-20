@@ -133,6 +133,12 @@
       become: true
       ignore_errors: true
 
+    - name: Untaint the master node so it is shedulable [Ignore if error]
+      shell: kubectl taint nodes --all node-role.kubernetes.io/control-plane-
+      register: ps
+      become: true
+      ignore_errors: true
+
     - name: Install the Flannel CNI
       shell: kubectl apply -f https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml
       register: ps

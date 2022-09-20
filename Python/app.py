@@ -87,7 +87,6 @@ hostname = 'postgresql'
 database = 'thebank'
 username = 'banker'
 # pwd = 'banker12345'
-pwd = 
 port_id = 5432
 conn = None
 cur = None

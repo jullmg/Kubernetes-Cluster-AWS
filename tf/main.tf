@@ -70,14 +70,24 @@ resource "aws_route_table_association" "a" {
   route_table_id = aws_route_table.kubernetes_route.id
 }
 
-resource "aws_network_interface" "kubernetes-network-int" {
-  count     = var.worker_nodes_count + 1
+resource "aws_network_interface" "kubernetes-masters-network-int" {
+  count     = var.master_nodes_count
   subnet_id = aws_subnet.kubernetes_subnet.id
   security_groups = [aws_security_group.kubernetes_control_plane.id]
   # private_ips = ["172.16.0.100"]
 
   tags = {
-    Name = "kubernetes-network-int"
+    Name = "kubernetes-masters-network-int"
+  }
+}
+
+resource "aws_network_interface" "kubernetes-workers-network-int" {
+  count     = var.worker_nodes_count
+  subnet_id = aws_subnet.kubernetes_subnet.id
+  security_groups = [aws_security_group.kubernetes_workers.id]
+
+  tags = {
+    Name = "kubernetes-workers-network-int"
   }
 }
 
@@ -89,11 +99,12 @@ resource "aws_instance" "kmaster" {
   instance_type     = var.ec2_instance_type
   availability_zone = var.aws_availibility_zone
   key_name          = "K8-cluster"
-  # vpc_security_group_ids = [aws_security_group.kubernetes_control_plane.id]
+  count             = var.master_nodes_count
+  vpc_security_group_ids = [aws_security_group.kubernetes_control_plane.id]
   # subnet_id              = aws_subnet.kubernetes_subnet.id
 
   network_interface {
-    network_interface_id = aws_network_interface.kubernetes-network-int[0].id
+    network_interface_id = aws_network_interface.kubernetes-masters-network-int[count.index].id
     device_index         = 0
   }
 
@@ -118,7 +129,7 @@ resource "aws_instance" "kworker" {
   availability_zone = var.aws_availibility_zone
   key_name          = "K8-cluster"
   count             = var.worker_nodes_count
-  # vpc_security_group_ids = [aws_security_group.kubernetes_workers.id]
+  vpc_security_group_ids = [aws_security_group.kubernetes_workers.id]
   # subnet_id = aws_subnet.kubernetes_subnet.id
 
 
@@ -127,7 +138,7 @@ resource "aws_instance" "kworker" {
   }
 
   network_interface {
-    network_interface_id = aws_network_interface.kubernetes-network-int[count.index + 1].id
+    network_interface_id = aws_network_interface.kubernetes-workers-network-int[count.index].id
     device_index         = 0
     
   }
@@ -143,7 +154,8 @@ resource "aws_instance" "kworker" {
 
 # Elastic IPs
 resource "aws_eip" "master_eip" {
-  instance = aws_instance.kmaster.id
+  count    = var.master_nodes_count
+  instance = aws_instance.kmaster[count.index].id
   vpc      = "true"
   tags     = { Name = "K8-cluster" }
 }
@@ -231,7 +243,7 @@ data "aws_ami" "aws_ubuntu_ami" {
 resource "local_file" "inventory_cfg" {
   content = templatefile("${path.module}/templates/inventory.tpl",
     {
-      master_ip = aws_eip.master_eip.public_ip
+      master_ip = aws_eip.master_eip[*].public_ip
       workers_ip = aws_eip.worker_eip[*].public_ip
     }
   )
