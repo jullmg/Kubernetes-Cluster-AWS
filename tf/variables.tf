@@ -7,9 +7,14 @@ variable "aws_region" {
 }
 
 variable "aws_availibility_zone" {
-  type        = string
-  default     = "ca-central-1a"
+  type        = list(any)
+  default     = ["ca-central-1a", "ca-central-1b"]
 }
+
+# variable "aws_availibility_zone" {
+#   type        = string
+#   default     = "ca-central-1a"
+# }
 
 variable "ec2_instance_type" {
   description = "AWS EC2 instance type"
@@ -34,11 +39,11 @@ variable "worker_nodes_count" {
 variable "kubernetes_control_plane" {
   description = "List of open input ports for the AWS security group"
   type        = list(any)
-  default     = [["22", "22"], ["53", "53"], ["6443", "6443"], ["2379", "2380"], ["10250", "10250"], ["10257", "10257"], ["10259", "10259"], ["30000", "32767"]]
+  default     = [["22", "22", "tcp"], ["6443", "6443", "tcp"], ["2379", "2380", "tcp"], ["8285", "8285", "udp"], ["8472", "8472", "udp"], ["10250", "10250", "tcp"], ["10257", "10257", "tcp"], ["10259", "10259", "tcp"], ["30000", "32767", "tcp"]]
 }
 
 variable "kubernetes_workers" {
   description = "List of open input ports for the AWS security group (k8 workers)"
   type        = list(any)
-  default     = [["22", "22"], ["53", "53"], ["10250", "10250"], ["30000", "32767"]]
+  default     = [["22", "22", "tcp"], ["8285", "8285", "udp"], ["8472", "8472", "udp"], ["10250", "10250", "tcp"], ["30000", "32767", "tcp"]]
 }

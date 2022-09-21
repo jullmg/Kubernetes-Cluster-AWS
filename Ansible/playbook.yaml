@@ -124,7 +124,9 @@
       ignore_errors: true
 
     - name: Copy kubectl config file for root user
-      shell: sudo cp -i /etc/kubernetes/admin.conf /root/.kube/config
+      shell: |
+        mkdir /root/.kube/
+        cp -i /etc/kubernetes/admin.conf /root/.kube/config
       become: true
 
     - name: Untaint the master node so it is shedulable [Ignore if error]
@@ -194,3 +196,16 @@
     - name: Joining the worker node
       shell: "{{ hostvars['DUMMY_HOST']['join_command_cached'] }}"
 
+-
+  name: Rebalance the CoreDNS Pods on workers nodes
+  hosts: masters
+  gather_facts: false
+  become: true
+  tasks:
+
+    - name: Pause for 30 seconds to let worker nodes finish joining the cluster
+      pause:
+        seconds: 30
+
+    - name: Restart coredns deployment
+      shell: "kubectl -n kube-system rollout restart deployment coredns"

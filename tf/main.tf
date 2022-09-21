@@ -1,3 +1,7 @@
+# To-do:
+# Change security group source ips so that only nodes can communicate (not 0.0.0.0)
+# unused network interfaces are created (too many)
+
 # Initiate backend and provider
 terraform {
   required_providers {
@@ -38,14 +42,25 @@ resource "aws_internet_gateway" "kubernetes_gw" {
   }
 }
 
-resource "aws_subnet" "kubernetes_subnet" {
+resource "aws_subnet" "kubernetes_subnet_1a" {
   vpc_id                  = aws_vpc.kubernetes_cluster.id
   cidr_block              = "172.16.0.0/24"
   map_public_ip_on_launch = true
   availability_zone = "ca-central-1a"
 
   tags = {
-    Name = "kubernetes_cluster"
+    Name = "kubernetes_cluster_1a"
+  }
+}
+
+resource "aws_subnet" "kubernetes_subnet_1b" {
+  vpc_id                  = aws_vpc.kubernetes_cluster.id
+  cidr_block              = "172.16.1.0/24"
+  map_public_ip_on_launch = true
+  availability_zone = "ca-central-1b"
+
+  tags = {
+    Name = "kubernetes_cluster_1b"
   }
 }
 
@@ -66,13 +81,18 @@ resource "aws_route_table" "kubernetes_route" {
 
 # Need to associate internet gateway route to subnet
 resource "aws_route_table_association" "a" {
-  subnet_id      = aws_subnet.kubernetes_subnet.id
+  subnet_id      = aws_subnet.kubernetes_subnet_1a.id
+  route_table_id = aws_route_table.kubernetes_route.id
+}
+
+resource "aws_route_table_association" "b" {
+  subnet_id      = aws_subnet.kubernetes_subnet_1b.id
   route_table_id = aws_route_table.kubernetes_route.id
 }
 
 resource "aws_network_interface" "kubernetes-masters-network-int" {
   count     = var.master_nodes_count
-  subnet_id = aws_subnet.kubernetes_subnet.id
+  subnet_id = aws_subnet.kubernetes_subnet_1a.id
   security_groups = [aws_security_group.kubernetes_control_plane.id]
   # private_ips = ["172.16.0.100"]
 
@@ -81,9 +101,9 @@ resource "aws_network_interface" "kubernetes-masters-network-int" {
   }
 }
 
-resource "aws_network_interface" "kubernetes-workers-network-int" {
+resource "aws_network_interface" "kubernetes-workers-network-int-1a" {
   count     = var.worker_nodes_count
-  subnet_id = aws_subnet.kubernetes_subnet.id
+  subnet_id = aws_subnet.kubernetes_subnet_1a.id
   security_groups = [aws_security_group.kubernetes_workers.id]
 
   tags = {
@@ -91,16 +111,26 @@ resource "aws_network_interface" "kubernetes-workers-network-int" {
   }
 }
 
+resource "aws_network_interface" "kubernetes-workers-network-int-1b" {
+  count     = var.worker_nodes_count
+  subnet_id = aws_subnet.kubernetes_subnet_1b.id
+  security_groups = [aws_security_group.kubernetes_workers.id]
+
+  tags = {
+    Name = "kubernetes-workers-network-int"
+  }
+}
 
 # Master node(s)
 # vpc and subnet are set on network interface resource
 resource "aws_instance" "kmaster" {
   ami               = data.aws_ami.aws_ubuntu_ami.id // Ubuntu Server 20.04LTS
   instance_type     = var.ec2_instance_type
-  availability_zone = var.aws_availibility_zone
+  # availability_zone = var.aws_availibility_zone
+  availability_zone = "ca-central-1a"
   key_name          = "K8-cluster"
   count             = var.master_nodes_count
-  vpc_security_group_ids = [aws_security_group.kubernetes_control_plane.id]
+  # vpc_security_group_ids = [aws_security_group.kubernetes_control_plane.id]
   # subnet_id              = aws_subnet.kubernetes_subnet.id
 
   network_interface {
@@ -126,10 +156,11 @@ resource "aws_instance" "kmaster" {
 resource "aws_instance" "kworker" {
   ami               = data.aws_ami.aws_ubuntu_ami.id
   instance_type     = var.ec2_instance_type
-  availability_zone = var.aws_availibility_zone
+  # availability_zone = var.aws_availibility_zone
+  availability_zone = count.index % 2 == 0 ? var.aws_availibility_zone[0] : var.aws_availibility_zone[1]
   key_name          = "K8-cluster"
   count             = var.worker_nodes_count
-  vpc_security_group_ids = [aws_security_group.kubernetes_workers.id]
+  # vpc_security_group_ids = [aws_security_group.kubernetes_workers.id]
   # subnet_id = aws_subnet.kubernetes_subnet.id
 
 
@@ -138,7 +169,7 @@ resource "aws_instance" "kworker" {
   }
 
   network_interface {
-    network_interface_id = aws_network_interface.kubernetes-workers-network-int[count.index].id
+    network_interface_id = count.index % 2 == 0 ? aws_network_interface.kubernetes-workers-network-int-1a[count.index].id : aws_network_interface.kubernetes-workers-network-int-1b[count.index].id
     device_index         = 0
     
   }
@@ -181,7 +212,7 @@ resource "aws_security_group" "kubernetes_control_plane" {
     content {
       from_port   = ingress.value[0]
       to_port     = ingress.value[1]
-      protocol    = "tcp"
+      protocol    = ingress.value[2]
       cidr_blocks = ["0.0.0.0/0"]
     }
   }
@@ -207,7 +238,7 @@ resource "aws_security_group" "kubernetes_workers" {
     content {
       from_port   = ingress.value[0]
       to_port     = ingress.value[1]
-      protocol    = "tcp"
+      protocol    = ingress.value[2]
       cidr_blocks = ["0.0.0.0/0"]
     }
   }
