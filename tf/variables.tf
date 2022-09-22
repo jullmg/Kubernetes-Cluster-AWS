@@ -6,9 +6,9 @@ variable "aws_region" {
   default     = "ca-central-1"
 }
 
-variable "aws_availibility_zone" {
-  type        = list(any)
-  default     = ["ca-central-1a", "ca-central-1b"]
+variable "aws_availibility_zones" {
+  type    = list(any)
+  default = ["ca-central-1a", "ca-central-1b"]
 }
 
 # variable "aws_availibility_zone" {
