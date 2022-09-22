@@ -201,6 +201,15 @@
       shell: "{{ hostvars['DUMMY_HOST']['join_command_cached'] }}"
 
 -
+  name: Reboot all nodes
+  hosts: all
+  gather_facts: false
+  become: true
+  tasks:
+    
+    - ansible.builtin.reboot:
+
+-
   name: Rebalance the CoreDNS Pods on workers nodes
   hosts: masters
   gather_facts: false
